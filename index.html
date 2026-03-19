@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>きりきざむ — strip glitch editor</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#08090f;
+    background-image:radial-gradient(ellipse at 50% 0%,#0f1118 0%,#08090f 70%);
+    font-family:'Helvetica Neue',system-ui,sans-serif;
+    color:#e8e0d4;height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  }
+  #top{
+    flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+    gap:6px;padding:10px 12px 8px;
+    background:linear-gradient(180deg,#0a0b12 0%,#08090f 100%);
+    border-bottom:1px solid #161824;z-index:10;
+  }
+  #title-bar{display:flex;align-items:baseline;gap:10px}
+  #title-bar .t1{font-size:16px;letter-spacing:.18em;color:#b4cdb0;font-weight:300}
+  #title-bar .t2{font-size:7px;color:#44425a;letter-spacing:.08em;text-transform:uppercase}
+  #drop-zone{
+    width:100%;max-width:360px;height:96px;
+    border:1.5px dashed #1e2030;border-radius:6px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    cursor:pointer;gap:6px;color:#44425a;font-size:11px;
+    transition:border-color .2s,color .2s,background .2s;
+  }
+  #drop-zone:hover,#drop-zone.drag{border-color:#b4cdb0;color:#b4cdb0;background:rgba(180,205,176,.03)}
+  #drop-zone .icon{font-size:22px;opacity:.7}
+  #canvas-wrap{display:none;flex-direction:column;align-items:center;gap:8px;width:100%}
+  #canvas-wrap.visible{display:flex}
+  canvas{
+    max-width:100%;max-height:40vh;border:1px solid #161824;border-radius:3px;
+    display:block;image-rendering:auto;transition:box-shadow .4s,filter .3s;
+  }
+  canvas.transparent-bg{
+    background-color:#111118;
+    background-image:
+      linear-gradient(45deg,#161822 25%,transparent 25%,transparent 75%,#161822 75%),
+      linear-gradient(45deg,#161822 25%,transparent 25%,transparent 75%,#161822 75%);
+    background-size:12px 12px;background-position:0 0,6px 6px;
+  }
+  #canvas-wrap.animating canvas{box-shadow:0 0 24px rgba(180,205,176,.08)}
+  #toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}
+  .btn{
+    padding:4px 14px;font-size:9px;background:transparent;cursor:pointer;
+    font-family:inherit;border-radius:3px;transition:all .15s;letter-spacing:.04em;
+  }
+  .btn-sub{border:1px solid #1e2030;color:#5a5870}
+  .btn-sub:hover{border-color:#5a5870;color:#8a8898}
+  .btn-main{border:1px solid #b4cdb0;color:#b4cdb0}
+  .btn-main:hover{background:rgba(180,205,176,.08);box-shadow:0 0 12px rgba(180,205,176,.1)}
+  .btn-anim{border:1px solid #c8a8be;color:#c8a8be}
+  .btn-anim:hover{background:rgba(200,168,190,.08)}
+  .btn-anim.active{background:rgba(200,168,190,.12);box-shadow:0 0 10px rgba(200,168,190,.15)}
+  .speed-wrap{display:flex;align-items:center;gap:4px}
+  .speed-wrap label{font-size:7px;color:#44425a}
+  .speed-slider{width:60px}
+  #controls{
+    flex:1;overflow-y:auto;padding:14px 12px 40px;
+    display:flex;flex-direction:column;gap:18px;
+    max-width:720px;width:100%;margin:0 auto;
+    scrollbar-width:thin;scrollbar-color:#1e2030 transparent;
+  }
+  #controls::-webkit-scrollbar{width:4px}
+  #controls::-webkit-scrollbar-track{background:transparent}
+  #controls::-webkit-scrollbar-thumb{background:#1e2030;border-radius:2px}
+  .preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:5px}
+  .preset-btn{
+    display:flex;flex-direction:column;align-items:flex-start;
+    padding:7px 10px;gap:2px;
+    background:transparent;border:1px solid #161824;color:#5a5870;
+    cursor:pointer;font-family:inherit;border-radius:3px;
+    transition:all .2s;text-align:left;
+  }
+  .preset-btn:hover{border-color:#c8a8be;color:#c8a8be;background:rgba(200,168,190,.04)}
+  .preset-btn .pn{font-size:10px;font-weight:600;letter-spacing:.05em}
+  .preset-btn .ps{font-size:7px;opacity:.6}
+  .mode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+  .mode-btn{
+    display:flex;flex-direction:column;align-items:center;
+    padding:6px 4px;gap:1px;cursor:pointer;
+    background:transparent;border:1px solid #161824;color:#5a5870;
+    font-family:inherit;border-radius:3px;transition:all .2s;
+  }
+  .mode-btn:hover{border-color:#3a3d5a;color:#8a8898}
+  .mode-btn.active{background:rgba(180,205,176,.06);border-color:#b4cdb0;color:#b4cdb0}
+  .mode-btn .ml{font-size:11px;font-weight:700}
+  .mode-btn .ms{font-size:7px;opacity:.6}
+  .reseed{
+    margin-top:4px;width:100%;padding:5px;font-size:8px;
+    background:transparent;border:1px solid #161824;color:#5a5870;
+    cursor:pointer;font-family:inherit;border-radius:3px;transition:all .15s;
+  }
+  .reseed:hover{border-color:#5a5870;color:#8a8898}
+  .sec-label{font-size:7px;color:#c8a8be;letter-spacing:.18em;margin-bottom:6px;text-transform:uppercase}
+  .group-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .group-header span{font-size:7px;color:#c8a8be;letter-spacing:.15em;white-space:nowrap;text-transform:uppercase}
+  .group-header .line{flex:1;height:1px;background:linear-gradient(90deg,#1e2030 0%,transparent 100%)}
+  .knob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px 10px}
+  .knob{display:flex;flex-direction:column;gap:3px;min-width:80px}
+  .knob .kl{font-size:11px;color:#d8d0c8;font-weight:600}
+  .knob .ks{font-size:7px;color:#44425a;letter-spacing:.04em}
+  .knob .kv{font-size:10px;color:#b4cdb0;font-family:'SF Mono',Menlo,monospace;letter-spacing:.02em}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;background:#161824;border-radius:2px;outline:none;
+    transition:background .15s;cursor:pointer;
+  }
+  input[type=range]:hover{background:#1e2030}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:11px;height:11px;border-radius:50%;
+    background:#b4cdb0;border:none;cursor:pointer;
+    box-shadow:0 0 6px rgba(180,205,176,.25);transition:box-shadow .15s,transform .1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{
+    box-shadow:0 0 10px rgba(180,205,176,.4);transform:scale(1.15);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:11px;height:11px;border-radius:50%;
+    background:#b4cdb0;border:none;cursor:pointer;
+    box-shadow:0 0 6px rgba(180,205,176,.25);
+  }
+  input[type=range]::-moz-range-track{height:3px;background:#161824;border-radius:2px;border:none}
+  .toggle-row{display:flex;align-items:center;gap:8px}
+  .toggle-row .tl{font-size:10px;color:#d8d0c8;font-weight:600}
+  .toggle{
+    width:36px;height:18px;border-radius:9px;
+    background:#161824;border:1px solid #1e2030;
+    cursor:pointer;position:relative;transition:all .2s;display:inline-block;
+  }
+  .toggle::after{
+    content:'';position:absolute;top:2px;left:2px;
+    width:12px;height:12px;border-radius:50%;background:#5a5870;transition:all .2s;
+  }
+  .toggle.on{background:rgba(180,205,176,.15);border-color:#b4cdb0}
+  .toggle.on::after{left:20px;background:#b4cdb0}
+  .hint{font-size:7px;color:#2a2d3a;text-align:center;padding:4px;letter-spacing:.1em}
+  kbd{font-size:7px;padding:1px 4px;border:1px solid #1e2030;border-radius:2px;color:#44425a;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <div id="title-bar">
+    <span class="t1">きりきざむ</span>
+    <span class="t2">strip glitch editor v2</span>
+  </div>
+  <div id="preview-area">
+    <div id="drop-zone" onclick="document.getElementById('fi').click()">
+      <span class="icon">◧</span>
+      <span>画像をドロップ / クリックして選択</span>
+      <input id="fi" type="file" accept="image/*" style="display:none">
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="c"></canvas>
+      <div id="toolbar">
+        <button class="btn btn-sub" onclick="resetImg()">↩ 変える</button>
+        <button class="btn btn-anim" id="anim-btn" onclick="toggleAnim()">▶ 動かす</button>
+        <div class="speed-wrap">
+          <label>速さ</label>
+          <input type="range" min="1" max="100" value="40" id="aspeed" class="speed-slider">
+        </div>
+        <button class="btn btn-main" onclick="dl()">↓ 保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <div>
+    <div class="sec-label">▸ 型 — presets</div>
+    <div class="preset-grid" id="preset-grid"></div>
+  </div>
+  <div>
+    <div class="sec-label">▸ うごかしかた — mode</div>
+    <div class="mode-grid" id="mode-grid"></div>
+    <button class="reseed" onclick="reseed()">🎲 ふりなおす <kbd>R</kbd></button>
+  </div>
+  <div>
+    <div class="group-header"><span>▸ きりかた — cut</span><div class="line"></div></div>
+    <div class="knob-grid">
+      <div class="knob"><span class="kl">はばの細さ</span><span class="ks">strip width</span><input type="range" min="1" max="60" step="1" id="sw" value="6" oninput="upd(this)"><span class="kv" id="sw-v">6px</span></div>
+      <div class="knob"><span class="kl">隙間</span><span class="ks">gap</span><input type="range" min="0" max="30" step="1" id="gap" value="0" oninput="upd(this)"><span class="kv" id="gap-v">0px</span></div>
+      <div class="knob"><span class="kl">縦のズレ</span><span class="ks">y offset</span><input type="range" min="0" max="200" step="1" id="oy" value="40" oninput="upd(this)"><span class="kv" id="oy-v">40px</span></div>
+      <div class="knob"><span class="kl">横のズレ</span><span class="ks">x jitter</span><input type="range" min="0" max="120" step="1" id="xj" value="0" oninput="upd(this)"><span class="kv" id="xj-v">0px</span></div>
+      <div class="knob"><span class="kl">波の速さ</span><span class="ks">frequency</span><input type="range" min="1" max="100" step="1" id="freq" value="25" oninput="upd(this)"><span class="kv" id="freq-v">25</span></div>
+      <div class="knob"><span class="kl">抜き落とし</span><span class="ks">dropout</span><input type="range" min="0" max="80" step="1" id="skip" value="0" oninput="upd(this)"><span class="kv" id="skip-v">0%</span></div>
+      <div class="knob"><span class="kl">ジグザグ位相</span><span class="ks">zz phase</span><input type="range" min="0" max="20" step="1" id="zzp" value="0" oninput="upd(this)"><span class="kv" id="zzp-v">0</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="group-header"><span>▸ まわしかた — rotate</span><div class="line"></div></div>
+    <div class="knob-grid">
+      <div class="knob"><span class="kl">順に回す</span><span class="ks">rot / strip</span><input type="range" min="-5" max="5" step="0.1" id="rps" value="0" oninput="upd(this)"><span class="kv" id="rps-v">0°</span></div>
+      <div class="knob"><span class="kl">うねり回転</span><span class="ks">rot wave</span><input type="range" min="0" max="45" step="1" id="rw" value="0" oninput="upd(this)"><span class="kv" id="rw-v">0°</span></div>
+      <div class="knob"><span class="kl">うねり速さ</span><span class="ks">wave freq</span><input type="range" min="1" max="100" step="1" id="rwf" value="20" oninput="upd(this)"><span class="kv" id="rwf-v">20</span></div>
+      <div class="knob"><span class="kl">ねじれ</span><span class="ks">twist</span><input type="range" min="-60" max="60" step="1" id="twist" value="0" oninput="upd(this)"><span class="kv" id="twist-v">0°</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="group-header"><span>▸ ゆがめかた — distort</span><div class="line"></div></div>
+    <div class="knob-grid">
+      <div class="knob"><span class="kl">横につぶす</span><span class="ks">scale x</span><input type="range" min="10" max="200" step="1" id="scx" value="100" oninput="upd(this)"><span class="kv" id="scx-v">100%</span></div>
+      <div class="knob"><span class="kl">つぶし波</span><span class="ks">scale wave</span><input type="range" min="0" max="80" step="1" id="scxw" value="0" oninput="upd(this)"><span class="kv" id="scxw-v">0%</span></div>
+      <div class="knob"><span class="kl">かしげる</span><span class="ks">shear</span><input type="range" min="-80" max="80" step="1" id="shx" value="0" oninput="upd(this)"><span class="kv" id="shx-v">0</span></div>
+      <div class="knob"><span class="kl">かしげ波</span><span class="ks">shear wave</span><input type="range" min="0" max="80" step="1" id="shxw" value="0" oninput="upd(this)"><span class="kv" id="shxw-v">0</span></div>
+      <div class="knob"><span class="kl">遠近感</span><span class="ks">perspective</span><input type="range" min="-100" max="100" step="1" id="px" value="0" oninput="upd(this)"><span class="kv" id="px-v">0px</span></div>
+      <div class="knob"><span class="kl">楕円軌道</span><span class="ks">eccentric</span><input type="range" min="0" max="120" step="1" id="ecc" value="0" oninput="upd(this)"><span class="kv" id="ecc-v">0px</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="group-header"><span>▸ いろどりかた — color</span><div class="line"></div></div>
+    <div class="knob-grid">
+      <div class="knob"><span class="kl">RGB分離</span><span class="ks">channel split</span><input type="range" min="0" max="40" step="1" id="rgb" value="0" oninput="upd(this)"><span class="kv" id="rgb-v">0px</span></div>
+      <div class="knob"><span class="kl">色相回転</span><span class="ks">hue step</span><input type="range" min="0" max="30" step="0.5" id="hue" value="0" oninput="upd(this)"><span class="kv" id="hue-v">0°</span></div>
+      <div class="knob"><span class="kl">透かし</span><span class="ks">opacity</span><input type="range" min="15" max="100" step="1" id="alpha" value="100" oninput="upd(this)"><span class="kv" id="alpha-v">100%</span></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="toggle-row">
+        <span class="tl">透明背景</span>
+        <div class="toggle" id="bg-toggle" onclick="toggleBg()"></div>
+        <span style="font-size:7px;color:#44425a">export with alpha</span>
+      </div>
+    </div>
+  </div>
+  <div class="hint">
+    <kbd>Space</kbd> 再生/停止 &nbsp; <kbd>R</kbd> ふりなおす &nbsp; <kbd>S</kbd> 保存
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+
+const MAX_PREVIEW = 640;           // preview cap (px on longest side)
+const ANIM_INTERVAL = 1000 / 30;   // ~30 fps target
+
+const MODES = [
+  {id:"alternate", label:"交互",      sub:"きりきりと"},
+  {id:"wave",      label:"なみうつ",  sub:"ゆらゆらと"},
+  {id:"sawtooth",  label:"のこぎり",  sub:"がりがりと"},
+  {id:"stagger",   label:"きざむ",    sub:"ちくちくと"},
+  {id:"zigzag",    label:"ジグザグ",  sub:"ぎざぎざと"},
+  {id:"spiral",    label:"グルグル",  sub:"ぐるぐると"},
+  {id:"bounce",    label:"跳ね飛ばす",sub:"ぴょんと"},
+  {id:"random",    label:"でたらめ",  sub:"めちゃくちゃ"},
+];
+
+const PRESETS = [
+  {name:"静寂の裂け目",sub:"crack in silence",
+   m:"alternate",sw:4,oy:22,xj:0,freq:25,skip:0,zzp:0,gap:1,
+   rps:0,rw:0,rwf:20,twist:0,scx:100,scxw:0,shx:0,shxw:0,px:0,ecc:0,
+   rgb:4,hue:0,alpha:95},
+  {name:"水面の記憶",sub:"memory on water",
+   m:"wave",sw:5,oy:45,xj:5,freq:30,skip:0,zzp:0,gap:0,
+   rps:0.3,rw:8,rwf:25,twist:0,scx:100,scxw:15,shx:0,shxw:10,px:0,ecc:0,
+   rgb:5,hue:0,alpha:92},
+  {name:"都市の断層",sub:"urban fault line",
+   m:"stagger",sw:8,oy:55,xj:18,freq:25,skip:12,zzp:0,gap:2,
+   rps:0,rw:0,rwf:20,twist:0,scx:100,scxw:0,shx:35,shxw:0,px:0,ecc:0,
+   rgb:10,hue:0,alpha:100},
+  {name:"夢のほつれ",sub:"dream unraveling",
+   m:"spiral",sw:5,oy:65,xj:8,freq:25,skip:5,zzp:0,gap:0,
+   rps:1.2,rw:12,rwf:30,twist:18,scx:100,scxw:20,shx:0,shxw:15,px:0,ecc:25,
+   rgb:14,hue:3,alpha:88},
+  {name:"風に溶ける",sub:"dissolving in wind",
+   m:"random",sw:6,oy:70,xj:35,freq:25,skip:28,zzp:0,gap:3,
+   rps:0,rw:18,rwf:15,twist:0,scx:85,scxw:25,shx:0,shxw:0,px:0,ecc:0,
+   rgb:6,hue:0,alpha:72},
+  {name:"万華鏡",sub:"kaleidoscope",
+   m:"zigzag",sw:4,oy:35,xj:0,freq:40,skip:0,zzp:5,gap:0,
+   rps:1.8,rw:10,rwf:35,twist:28,scx:100,scxw:18,shx:0,shxw:0,px:0,ecc:18,
+   rgb:0,hue:7,alpha:100},
+  {name:"時の歪み",sub:"time warp",
+   m:"wave",sw:3,oy:35,xj:0,freq:55,skip:0,zzp:0,gap:0,
+   rps:0.5,rw:22,rwf:45,twist:35,scx:115,scxw:35,shx:40,shxw:25,px:45,ecc:0,
+   rgb:8,hue:1.5,alpha:100},
+  {name:"ノイズの海",sub:"sea of noise",
+   m:"random",sw:3,oy:100,xj:50,freq:50,skip:20,zzp:0,gap:1,
+   rps:2,rw:30,rwf:40,twist:40,scx:80,scxw:40,shx:50,shxw:30,px:60,ecc:40,
+   rgb:18,hue:4,alpha:80},
+];
+
+const UNITS = {sw:"px",gap:"px",oy:"px",xj:"px",freq:"",skip:"%",zzp:"",
+  rps:"°",rw:"°",rwf:"",twist:"°",scx:"%",scxw:"%",shx:"",shxw:"",px:"px",ecc:"px",
+  rgb:"px",hue:"°",alpha:"%"};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+
+let mode = "alternate", seed = 0, img = null;
+let _animating = false, phase = 0, lastTs = 0, animRAF = null, lastDrawTs = 0;
+let transparentBg = false;
+let drawPending = false;
+
+// Cached offscreen buffers (created lazily, reused across frames)
+let _off = null, _offCtx = null;        // offscreen for strip rendering
+let _tmp = null, _tmpCtx = null;        // temp for putImageData
+let _rgbR = null, _rgbG = null, _rgbB = null, _rgbLen = 0;
+let _tmpImg = null;                      // cached ImageData
+
+function ensureOff(w, h) {
+  if (!_off || _off.width !== w || _off.height !== h) {
+    _off = document.createElement('canvas'); _off.width = w; _off.height = h;
+    _offCtx = _off.getContext('2d');
+  }
+}
+function ensureTmp(w, h) {
+  if (!_tmp || _tmp.width !== w || _tmp.height !== h) {
+    _tmp = document.createElement('canvas'); _tmp.width = w; _tmp.height = h;
+    _tmpCtx = _tmp.getContext('2d');
+  }
+}
+function ensureRGB(len) {
+  if (_rgbLen !== len) {
+    _rgbR = new Uint8ClampedArray(len);
+    _rgbG = new Uint8ClampedArray(len);
+    _rgbB = new Uint8ClampedArray(len);
+    _rgbLen = len;
+  }
+}
+
+// ═══════════════════════════════════════════
+// INIT UI
+// ═══════════════════════════════════════════
+
+const modeGrid = document.getElementById("mode-grid");
+MODES.forEach(m => {
+  const b = document.createElement("button");
+  b.className = "mode-btn" + (m.id === mode ? " active" : "");
+  b.dataset.id = m.id;
+  b.innerHTML = `<span class="ml">${m.label}</span><span class="ms">${m.sub}</span>`;
+  b.onclick = () => {
+    mode = m.id;
+    document.querySelectorAll(".mode-btn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    scheduleDraw();
+  };
+  modeGrid.appendChild(b);
+});
+
+const presetGrid = document.getElementById("preset-grid");
+PRESETS.forEach(p => {
+  const b = document.createElement("button");
+  b.className = "preset-btn";
+  b.innerHTML = `<span class="pn">${p.name}</span><span class="ps">${p.sub}</span>`;
+  b.onclick = () => applyPreset(p);
+  presetGrid.appendChild(b);
+});
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+
+function v(id) { return parseFloat(document.getElementById(id).value); }
+
+function upd(el) {
+  const u = UNITS[el.id] || "";
+  document.getElementById(el.id + "-v").textContent = el.value + u;
+  if (!_animating) scheduleDraw();
+}
+
+// Debounced draw via rAF — coalesces rapid slider changes
+function scheduleDraw() {
+  if (drawPending) return;
+  drawPending = true;
+  requestAnimationFrame(() => { drawPending = false; draw(); });
+}
+
+function rng(i, s = 0) {
+  let x = Math.sin(i * 127.1 + s * 93.3 + seed * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function reseed() { seed++; scheduleDraw(); }
+
+// ═══════════════════════════════════════════
+// CORE STRIP RENDERER
+// Draws all strips to the given context.
+// Coordinates are in original-image space;
+// caller is responsible for ctx.scale().
+// ═══════════════════════════════════════════
+
+function drawAllStrips(ctx, source, W, H, pad, phi, useHue) {
+  const sw = v("sw"), gapV = v("gap"), oy = v("oy"), freq = v("freq"), xj = v("xj");
+  const skipV = v("skip"), zzp = v("zzp");
+  const rps = v("rps"), rw = v("rw"), rwf = v("rwf"), twistV = v("twist");
+  const scx = v("scx"), scxw = v("scxw"), shx = v("shx"), shxw = v("shxw"), pxV = v("px"), ecc = v("ecc");
+  const hueStep = v("hue"), alphaV = v("alpha") / 100;
+  const step = sw + gapV;
+  const n = Math.ceil(W / step);
+  const cx = n / 2;
+
+  for (let i = 0; i < n; i++) {
+    if (skipV > 0 && rng(i, 500) * 100 < skipV) continue;
+    const sx = i * step;
+    const stripW = Math.min(sw, W - sx);
+    if (stripW <= 0) continue;
+
+    const d = (i - cx) / Math.max(cx, 1);
+    const t = i / Math.max(n - 1, 1);
+    let dy = 0, dx = 0;
+
+    if      (mode === "alternate") { dy = i % 2 === 0 ? oy : -oy; }
+    else if (mode === "wave")      { dy = Math.round(Math.sin(i * freq * 0.01 + phi) * oy); }
+    else if (mode === "sawtooth")  { dy = Math.round(((i % 20) / 20 * 2 - 1) * oy); }
+    else if (mode === "stagger")   { dy = (i % 3) * Math.round(oy / 2); }
+    else if (mode === "zigzag")    { const p = ((i + zzp) % 20) / 10; dy = Math.round((p < 1 ? p : 2 - p) * oy * 2 - oy); }
+    else if (mode === "spiral")    { const a = d * Math.PI * 1.5 + phi * 0.3; dy = Math.round(Math.cos(a) * Math.abs(d) * oy); dx = Math.round(Math.sin(a) * Math.abs(d) * oy * 0.5); }
+    else if (mode === "bounce")    { dy = Math.round(d * d * oy * 3 * (i % 2 === 0 ? 1 : -1)); }
+    else { const rv = _animating ? rng(i) + Math.sin(i * 0.3 + phi) * 0.3 : rng(i); dy = Math.round((rv * 2 - 1) * oy); }
+
+    if (xj)  dx += Math.round((rng(i, 1) * 2 - 1) * xj);
+    if (pxV) dx += Math.round(d * pxV);
+    if (ecc) { dx += Math.round(Math.cos(t * Math.PI * 2 + phi * 0.2) * ecc); dy += Math.round(Math.sin(t * Math.PI * 2 + phi * 0.2) * ecc * 0.5); }
+
+    let rot = rps * i * 0.5;
+    if (rw)     rot += Math.sin(i * rwf * 0.01 + phi * 0.5) * rw;
+    if (twistV) rot += d * twistV;
+
+    let sc = scx / 100;
+    if (scxw) sc = Math.max(0.05, sc + Math.sin(i * freq * 0.015 + phi * 0.4) * scxw * 0.01);
+
+    let sh = shx * 0.01;
+    if (shxw) sh += Math.sin(i * freq * 0.012 + phi * 0.3) * shxw * 0.01;
+
+    const hue = useHue ? hueStep * i : 0;
+    const bx = pad + sx + dx + stripW / 2;
+    const by = pad + H / 2 + dy;
+
+    ctx.save();
+    ctx.globalAlpha = alphaV;
+    if (hue) ctx.filter = `hue-rotate(${(hue % 360).toFixed(1)}deg)`;
+    ctx.translate(bx, by);
+    ctx.rotate(rot * Math.PI / 180);
+    ctx.transform(sc, 0, sh, 1, 0, 0);
+    ctx.drawImage(source, sx, 0, stripW, H, -stripW / 2, -H / 2, stripW, H);
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════
+// RGB CHANNEL SPLIT  (post-processing path)
+// Input : offscreen canvas with rendered strips
+// Output: composites R/G/B channels with offset
+//         onto targetCtx using 'lighter'
+// ═══════════════════════════════════════════
+
+function compositeRGB(targetCtx, cw, ch, offset) {
+  const data = _offCtx.getImageData(0, 0, cw, ch);
+  const src = data.data;
+  const len = src.length;
+
+  ensureRGB(len);
+  _rgbR.fill(0); _rgbG.fill(0); _rgbB.fill(0);
+
+  for (let p = 0; p < len; p += 4) {
+    const a = src[p + 3];
+    _rgbR[p]     = src[p];     _rgbR[p + 3] = a;
+    _rgbG[p + 1] = src[p + 1]; _rgbG[p + 3] = a;
+    _rgbB[p + 2] = src[p + 2]; _rgbB[p + 3] = a;
+  }
+
+  ensureTmp(cw, ch);
+  if (!_tmpImg || _tmpImg.width !== cw || _tmpImg.height !== ch) {
+    _tmpImg = new ImageData(cw, ch);
+  }
+
+  targetCtx.globalCompositeOperation = 'lighter';
+  const bufs = [_rgbR, _rgbG, _rgbB];
+  const offs = [offset, 0, -offset];
+  for (let c = 0; c < 3; c++) {
+    _tmpImg.data.set(bufs[c]);
+    _tmpCtx.putImageData(_tmpImg, 0, 0);
+    targetCtx.drawImage(_tmp, 0, offs[c]);
+  }
+  targetCtx.globalCompositeOperation = 'source-over';
+}
+
+// ═══════════════════════════════════════════
+// MAIN DRAW
+// forExport = true → full resolution, all effects
+// forExport = false → preview resolution, skip heavy filters during animation
+// ═══════════════════════════════════════════
+
+function draw(forExport) {
+  if (!img) return;
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const W = img.width, H = img.height, pad = 220;
+
+  // ── Scaling ──
+  const scale = forExport ? 1 : Math.min(1, MAX_PREVIEW / Math.max(W, H));
+  const cw = Math.round((W + pad * 2) * scale);
+  const ch = Math.round((H + pad * 2) * scale);
+  canvas.width = cw;
+  canvas.height = ch;
+
+  const rgbSplit = v("rgb");
+  // Per-strip hue is expensive; skip during animation, use CSS approx instead
+  const hueStep = v("hue");
+  const useHue = hueStep > 0 && (!_animating || forExport);
+
+  // CSS hue approximation during animation
+  if (_animating && hueStep > 0 && !forExport) {
+    canvas.style.filter = `hue-rotate(${((phase * hueStep * 12) % 360).toFixed(0)}deg)`;
+  } else {
+    canvas.style.filter = 'none';
+  }
+
+  if (rgbSplit > 0) {
+    // ── RGB SPLIT PATH ──
+    // 1. render strips to offscreen (transparent bg)
+    ensureOff(cw, ch);
+    _offCtx.clearRect(0, 0, cw, ch);
+    _offCtx.save();
+    _offCtx.scale(scale, scale);
+    drawAllStrips(_offCtx, img, W, H, pad, phase, useHue);
+    _offCtx.restore();
+
+    // 2. background on main canvas
+    if (transparentBg) {
+      ctx.clearRect(0, 0, cw, ch);
+      canvas.classList.add('transparent-bg');
+    } else {
+      canvas.classList.remove('transparent-bg');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, cw, ch);
+    }
+
+    // 3. post-process RGB split onto main canvas
+    compositeRGB(ctx, cw, ch, Math.round(rgbSplit * scale));
+
+  } else {
+    // ── DIRECT PATH (fastest) ──
+    if (transparentBg) {
+      ctx.clearRect(0, 0, cw, ch);
+      canvas.classList.add('transparent-bg');
+    } else {
+      canvas.classList.remove('transparent-bg');
+      ctx.fillStyle = '#08090f';
+      ctx.fillRect(0, 0, cw, ch);
+    }
+    ctx.save();
+    ctx.scale(scale, scale);
+    drawAllStrips(ctx, img, W, H, pad, phase, useHue);
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════
+// ANIMATION (throttled to ~30 fps)
+// ═══════════════════════════════════════════
+
+function toggleAnim() {
+  if (_animating) {
+    _animating = false;
+    if (animRAF) cancelAnimationFrame(animRAF);
+    document.getElementById("anim-btn").textContent = "▶ 動かす";
+    document.getElementById("anim-btn").classList.remove("active");
+    document.getElementById("canvas-wrap").classList.remove("animating");
+    // Redraw at full quality (hue etc.) after stopping
+    draw();
+  } else {
+    _animating = true;
+    lastTs = lastDrawTs = performance.now();
+    document.getElementById("anim-btn").textContent = "⏸ 止める";
+    document.getElementById("anim-btn").classList.add("active");
+    document.getElementById("canvas-wrap").classList.add("animating");
+    animLoop(lastTs);
+  }
+}
+
+function animLoop(ts) {
+  if (!_animating) return;
+  const dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  phase += dt * v("aspeed") * 0.04;
+
+  if (ts - lastDrawTs >= ANIM_INTERVAL) {
+    lastDrawTs = ts;
+    draw();
+  }
+  animRAF = requestAnimationFrame(animLoop);
+}
+
+// ═══════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════
+
+function applyPreset(p) {
+  mode = p.m;
+  document.querySelectorAll(".mode-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.id === mode);
+  });
+  const map = {
+    sw:p.sw,gap:p.gap,oy:p.oy,xj:p.xj,freq:p.freq,skip:p.skip,zzp:p.zzp,
+    rps:p.rps,rw:p.rw,rwf:p.rwf,twist:p.twist,
+    scx:p.scx,scxw:p.scxw,shx:p.shx,shxw:p.shxw,px:p.px,ecc:p.ecc,
+    rgb:p.rgb,hue:p.hue,alpha:p.alpha
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) { el.value = val; upd(el); }
+  });
+}
+
+// ═══════════════════════════════════════════
+// BACKGROUND TOGGLE
+// ═══════════════════════════════════════════
+
+function toggleBg() {
+  transparentBg = !transparentBg;
+  document.getElementById("bg-toggle").classList.toggle("on", transparentBg);
+  scheduleDraw();
+}
+
+// ═══════════════════════════════════════════
+// FILE I/O
+// ═══════════════════════════════════════════
+
+function loadFile(f) {
+  if (!f?.type.startsWith("image/")) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const i = new Image();
+    i.onload = () => {
+      img = i;
+      // Invalidate cached buffers so they resize on next draw
+      _off = _tmp = _tmpImg = null;
+      _rgbLen = 0;
+      document.getElementById("drop-zone").style.display = "none";
+      document.getElementById("canvas-wrap").classList.add("visible");
+      draw();
+    };
+    i.src = e.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function resetImg() {
+  if (_animating) toggleAnim();
+  img = null;
+  document.getElementById("c").style.filter = 'none';
+  document.getElementById("drop-zone").style.display = "";
+  document.getElementById("canvas-wrap").classList.remove("visible");
+}
+
+function dl() {
+  // Export at full resolution
+  const wasAnim = _animating;
+  if (wasAnim) { _animating = false; }
+  draw(true);
+  const canvas = document.getElementById("c");
+  const a = document.createElement("a");
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:-]/g, "");
+  a.href = canvas.toDataURL("image/png");
+  a.download = `kirikiziamu_${mode}_${ts}.png`;
+  a.click();
+  // Restore preview
+  if (wasAnim) { _animating = true; }
+  draw();
+  if (wasAnim) { animLoop(performance.now()); }
+}
+
+// ═══════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════
+
+const dz = document.getElementById("drop-zone");
+dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag"); });
+dz.addEventListener("dragleave", () => { dz.classList.remove("drag"); });
+dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("drag"); loadFile(e.dataTransfer.files[0]); });
+document.getElementById("fi").addEventListener("change", e => loadFile(e.target.files[0]));
+document.body.addEventListener("dragover", e => { e.preventDefault(); });
+document.body.addEventListener("drop", e => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]?.type.startsWith("image/")) loadFile(e.dataTransfer.files[0]);
+});
+
+// ═══════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.code === "Space" && img) { e.preventDefault(); toggleAnim(); }
+  if (e.code === "KeyR"  && img) { e.preventDefault(); reseed(); }
+  if (e.code === "KeyS"  && img) { e.preventDefault(); dl(); }
+});
+</script>
+</body>
+</html>
