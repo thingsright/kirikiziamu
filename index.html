@@ -159,6 +159,7 @@
       <canvas id="c"></canvas>
       <div id="toolbar">
         <button class="btn btn-sub" onclick="resetImg()">↩ 変える</button>
+        <button class="btn btn-sub" id="orig-btn" onclick="toggleOriginal()">👁 元画像</button>
         <button class="btn btn-anim" id="anim-btn" onclick="toggleAnim()">▶ 動かす</button>
         <div class="speed-wrap">
           <label>速さ</label>
@@ -228,7 +229,7 @@
     </div>
   </div>
   <div class="hint">
-    <kbd>Space</kbd> 再生/停止 &nbsp; <kbd>R</kbd> ふりなおす &nbsp; <kbd>S</kbd> 保存
+    <kbd>Space</kbd> 再生/停止 &nbsp; <kbd>R</kbd> ふりなおす &nbsp; <kbd>O</kbd> 元画像 &nbsp; <kbd>S</kbd> 保存
   </div>
 </div>
 
@@ -298,6 +299,7 @@ let mode = "alternate", seed = 0, img = null;
 let _animating = false, phase = 0, lastTs = 0, animRAF = null, lastDrawTs = 0;
 let transparentBg = false;
 let drawPending = false;
+let showOriginal = false;
 
 // Cached offscreen buffers (created lazily, reused across frames)
 let _off = null, _offCtx = null;        // offscreen for strip rendering
@@ -407,14 +409,14 @@ function drawAllStrips(ctx, source, W, H, pad, phi, useHue) {
     const t = i / Math.max(n - 1, 1);
     let dy = 0, dx = 0;
 
-    if      (mode === "alternate") { dy = i % 2 === 0 ? oy : -oy; }
+    if      (mode === "alternate") { dy = Math.round((i % 2 === 0 ? 1 : -1) * (_animating ? Math.cos(phi) : 1) * oy); }
     else if (mode === "wave")      { dy = Math.round(Math.sin(i * freq * 0.01 + phi) * oy); }
-    else if (mode === "sawtooth")  { dy = Math.round(((i % 20) / 20 * 2 - 1) * oy); }
-    else if (mode === "stagger")   { dy = (i % 3) * Math.round(oy / 2); }
-    else if (mode === "zigzag")    { const p = ((i + zzp) % 20) / 10; dy = Math.round((p < 1 ? p : 2 - p) * oy * 2 - oy); }
+    else if (mode === "sawtooth")  { const si = (i + phi * 5) % 20; dy = Math.round((si / 20 * 2 - 1) * oy); }
+    else if (mode === "stagger")   { dy = ((i + Math.floor(phi * 3)) % 3) * Math.round(oy / 2); }
+    else if (mode === "zigzag")    { const p = ((i + zzp + phi * 4) % 20) / 10; dy = Math.round((p < 1 ? p : 2 - p) * oy * 2 - oy); }
     else if (mode === "spiral")    { const a = d * Math.PI * 1.5 + phi * 0.3; dy = Math.round(Math.cos(a) * Math.abs(d) * oy); dx = Math.round(Math.sin(a) * Math.abs(d) * oy * 0.5); }
-    else if (mode === "bounce")    { dy = Math.round(d * d * oy * 3 * (i % 2 === 0 ? 1 : -1)); }
-    else { const rv = _animating ? rng(i) + Math.sin(i * 0.3 + phi) * 0.3 : rng(i); dy = Math.round((rv * 2 - 1) * oy); }
+    else if (mode === "bounce")    { dy = Math.round(d * d * oy * 3 * Math.sin(phi + i * 0.3)); }
+    else { const rv = _animating ? rng(i) + Math.sin(i * 0.3 + phi) * 0.4 : rng(i); dy = Math.round((rv * 2 - 1) * oy); }
 
     if (xj)  dx += Math.round((rng(i, 1) * 2 - 1) * xj);
     if (pxV) dx += Math.round(d * pxV);
@@ -494,6 +496,16 @@ function draw(forExport) {
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const W = img.width, H = img.height, pad = 220;
+
+  // ── Show original shortcut ──
+  if (showOriginal && !forExport) {
+    const s = Math.min(1, MAX_PREVIEW / Math.max(W, H));
+    canvas.width = Math.round(W * s); canvas.height = Math.round(H * s);
+    canvas.style.filter = 'none';
+    canvas.classList.remove('transparent-bg');
+    ctx.drawImage(img, 0, 0, W, H, 0, 0, canvas.width, canvas.height);
+    return;
+  }
 
   // ── Scaling ──
   const scale = forExport ? 1 : Math.min(1, MAX_PREVIEW / Math.max(W, H));
@@ -615,6 +627,15 @@ function applyPreset(p) {
 // BACKGROUND TOGGLE
 // ═══════════════════════════════════════════
 
+function toggleOriginal() {
+  showOriginal = !showOriginal;
+  const btn = document.getElementById("orig-btn");
+  btn.classList.toggle("active", showOriginal);
+  if (showOriginal) { btn.classList.remove("btn-sub"); btn.classList.add("btn-anim"); }
+  else              { btn.classList.remove("btn-anim"); btn.classList.add("btn-sub"); }
+  scheduleDraw();
+}
+
 function toggleBg() {
   transparentBg = !transparentBg;
   document.getElementById("bg-toggle").classList.toggle("on", transparentBg);
@@ -688,11 +709,27 @@ document.body.addEventListener("drop", e => {
 // KEYBOARD
 // ═══════════════════════════════════════════
 
+// ═══════════════════════════════════════════
+// CIRCULAR SLIDERS
+// When dragged to an extreme and released, wrap to opposite end.
+// ═══════════════════════════════════════════
+
+document.querySelectorAll('#controls input[type=range]').forEach(el => {
+  el.addEventListener('change', function() {
+    const val = parseFloat(this.value);
+    const min = parseFloat(this.min);
+    const max = parseFloat(this.max);
+    if (val >= max) { this.value = min; upd(this); }
+    else if (val <= min) { this.value = max; upd(this); }
+  });
+});
+
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
   if (e.code === "Space" && img) { e.preventDefault(); toggleAnim(); }
   if (e.code === "KeyR"  && img) { e.preventDefault(); reseed(); }
   if (e.code === "KeyS"  && img) { e.preventDefault(); dl(); }
+  if (e.code === "KeyO"  && img) { e.preventDefault(); toggleOriginal(); }
 });
 </script>
 </body>
