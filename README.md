@@ -3,7 +3,7 @@
 画像を短冊状に切り刻み、ずらし・回し・ゆがめて再構成する
 ブラウザだけで動作する単一HTMLファイル。インストール不要
 
-**[→ Live Demo](https://your-username.github.io/kirikiziamu/)**
+**[→ Live Demo](https://thingsright.github.io/kirikiziamu/)**
 
 ---
 
@@ -53,7 +53,7 @@ gh repo create kirikiziamu --public --source=. --push
 gh api repos/{owner}/{repo}/pages -X POST -f source.branch=main -f source.path=/
 ```
 
-数分後に `https://your-username.github.io/kirikiziamu/` で公開されます。
+数分後に `https://thingsright.github.io/kirikiziamu/` で公開されます。
 
 ## ライセンス
 
