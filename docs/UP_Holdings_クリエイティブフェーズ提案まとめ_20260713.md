@@ -51,12 +51,19 @@
 
 ※7/13時点で確定金額の新規資料は未確認。以下が交渉のベースライン。
 
-- **Branding Retainer（木谷4/9提案ベース）**：月250万円 × 3ヶ月 ＝ 750万円（内訳：KDS 月150万＋木谷商店 月100万）
-  - 4/30資料ではKDS分のみで「月150万×3ヶ月＝450万円」の表記もあり。木谷さんより「3ヶ月以上のRetainerは請求しない」（作業が3ヶ月から漏れても追加請求しない）配慮の言及あり
-- **Design Guidelines SoW（4/1・新規出店店舗の名称/デザインルール開発）**：Planning/Produce 150万＋Creative/AD/Design 250万 ＝ 月400万円（税別）※一旦保留扱い
-- **紹介動画ベンチマーク（木谷商店ナレッジ）**：
-  - ① ドキュメント／事例広告型：500〜800万円（実スタッフ・患者キャスト、1〜3分）※音楽・ナレーション年次更新費別途
+- **Branding Retainer（木谷4/9提案）**
+  - 元ファイル：**「UP Holdings | Branding SoW＋Estimate.xlsx」**（木谷さん所有、4/6 Slack DMで初回共有→4/9 16:15更新版共有）
+  - **木谷さん原本の見積：Planning/Produce 月120万＋Creative/AD・Copy・Design 月150万 ＝ 月270万円、TTL（3ヶ月想定）810万円**
+  - KDS 0430資料の「月250万円（KDS150＋木谷100）×3ヶ月＝750万円」は木谷原本の金額とは**一致しない**（KDS側で組み替えた数字）。7/13提案でどちらの構造を使うか要確認
+  - 木谷さん4/9 DM原文：「3ヶ月は欲しい意向です。それでもAsset開発等、若干3ヶ月から漏れる可能性もあるため、その場合、3ヶ月以上のRetainerは請求いたしません」
+- **Design Guidelines SoW（新規出店パッケージ・一旦保留）**：ここでは木谷原本→KDS版のマージン構造が明確
+  - 木谷原本「UP Holdings | Design Guidelines SoW＋Estimate.xlsx」（4/1共有）：**木谷Planning/Produce 100万＋Creative/AD/Design 150万 ＝ 月250万円（税別）**
+  - KDS版「UP Holdings | Design Guidelines SoW＋Estimate (KDS)」（4/2作成、Google Sheets）：**Planning/Produce 150万＋Creative/AD/Design 250万 ＝ 月400万円（税別）**（＝KDSマージン＋150万/月）
+- **紹介動画ベンチマーク（木谷商店ナレッジ）**：出所はファイルではなく**木谷さんの4/14 23:57 Slack DM**（0430資料P15はこのDMをほぼ転記）
+  - ① ドキュメント／事例広告型：500〜800万円（実スタッフ・患者キャスト、1〜3分。「実際はもっとコストを抑えることも可能」）※音楽・ナレーション年次更新費別途
   - ② CM型：1,000〜2,000万円（プロキャスト・ロケ・CG、1分程度）※キャスト契約料が年次発生
+  - 制作期間の目安（同DM）：企画2-3週→演出プラン2-3週→撮影準備1-2週→撮影→オフライン編集2-3週→オンライン編集1-2週（トータル2.5〜3ヶ月、短縮可）
+  - 事例集PDF「Branding:Promotion Menu_3ヶ月＋CaseStudy.pdf」（木谷さん4/14共有。ONE COMPATH／LUUP／OKAN等のGO社時代事例。**クライアント内部共有まで**の取り扱い制限あり）
 - **投資の語り方（BSフレーム）**：クリエイティブ投資はPL（費用）でなくBS（資産）で見る。MVV/CI/VIは10年資産。採用単価▲6万円×325人＝年▲1,950万円 → Retainer 450万円は**約2.8ヶ月で回収**（4/30資料の試算）
 
 ## 5. 体制
@@ -93,7 +100,12 @@
 - Phase 1最終納品物：`UP_2030_200_Plan_(final).pdf`（Drive「UP HOLDINGS/最終報告」）
 - 請求書：`KDS-INV-2026-0630_UP-Holdings-Phase1.pdf`
 - 制作スコープ・見積参照：`UP_Holdings_0430_Discussion（戦略オプションと制作見積）.pptx`／`UP_Holdings_0430_制作セクション_p12-16.pptx`／`UP_Holdings_Growth_Options_2026-04-30.pptx`
-- Design Guidelines SoW：`UP Holdings | Design Guidelines SoW＋Estimate (KDS)`（Google Sheets）
+- 木谷さん原本（いずれも kidani@sh0ten.jp 所有・Slack DM経由で受領）：
+  - `UP Holdings | Branding SoW＋Estimate.xlsx`（Drive ID: 1O6LtQUrcDWWDqHuKChcnaNdbEx9d86QU）— 4/9提案リテイナーの元
+  - `Branding+Promotion Menu.pdf`（6ヶ月版スケジュール、4/6共有）／`Branding:Promotion Menu_3ヶ月.pdf`（3ヶ月版、4/9共有）／`Branding:Promotion Menu_3ヶ月＋CaseStudy.pdf`（事例付き、4/14共有）
+  - `UP Holdings | Design Guidelines SoW＋Estimate.xlsx`（月250万の原本、4/1共有）
+  - 動画ベンチマーク金額：木谷さん4/14 23:57 Slack DM（DMチャンネル D0AH3MJJL2V）
+- Design Guidelines SoW（KDS版・月400万）：`UP Holdings | Design Guidelines SoW＋Estimate (KDS)`（Google Sheets）
 - 木谷さん相談：tldv「Soudan」2026/6/29 17:00（3段階構想・体制・休暇確認）
 - 戦略経緯：tldv「UP Holdings Strategy」6/23、Zoom「UP HOLDING 第5回」4/7 ほか
 
