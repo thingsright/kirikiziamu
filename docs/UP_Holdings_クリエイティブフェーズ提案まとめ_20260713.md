@@ -51,11 +51,13 @@
 
 ※7/13時点で確定金額の新規資料は未確認。以下が交渉のベースライン。
 
-- **Branding Retainer（木谷4/9提案）**
+- **Branding Retainer（木谷4/9提案 → KDS 4/30提示）**
   - 元ファイル：**「UP Holdings | Branding SoW＋Estimate.xlsx」**（木谷さん所有、4/6 Slack DMで初回共有→4/9 16:15更新版共有）
   - **木谷さん原本の見積：Planning/Produce 月120万＋Creative/AD・Copy・Design 月150万 ＝ 月270万円、TTL（3ヶ月想定）810万円**
-  - KDS 0430資料の「月250万円（KDS150＋木谷100）×3ヶ月＝750万円」は木谷原本の金額とは**一致しない**（KDS側で組み替えた数字）。7/13提案でどちらの構造を使うか要確認
-  - 木谷さん4/9 DM原文：「3ヶ月は欲しい意向です。それでもAsset開発等、若干3ヶ月から漏れる可能性もあるため、その場合、3ヶ月以上のRetainerは請求いたしません」
+  - **KDS 4/30本体資料（0430_Discussion「見積」スライド）＝クライアント提示額：Planning/Produce 400万＋Creative/AD・Copy・Design 470万 ＝ TTL 870万円（3ヶ月）**
+    - ＝木谷原本810万に **KDS上乗せ＋60万**（P/P +40万、Creative +20万）。BSスライドの回収試算も870万ベース（回収 約5.3ヶ月）
+    - 注意：同じ4/30資料群でも数字が混在 — Growth Options版（4/29ドラフト）は「月250万（KDS150＋木谷100）＝750万・回収約2ヶ月」、制作セクション版はKDS単体「450万・回収2.8ヶ月」、BSスライド内にも「810万÷10年」の記述が残る。**本日使うベースラインは本体資料の870万**
+  - 木谷さん4/9 DM原文：「3ヶ月は欲しい意向です。それでもAsset開発等、若干3ヶ月から漏れる可能性もあるため、その場合、3ヶ月以上のRetainerは請求いたしません」（→ 4/30資料の※注記に転記済み）
 - **Design Guidelines SoW（新規出店パッケージ・一旦保留）**：ここでは木谷原本→KDS版のマージン構造が明確
   - 木谷原本「UP Holdings | Design Guidelines SoW＋Estimate.xlsx」（4/1共有）：**木谷Planning/Produce 100万＋Creative/AD/Design 150万 ＝ 月250万円（税別）**
   - KDS版「UP Holdings | Design Guidelines SoW＋Estimate (KDS)」（4/2作成、Google Sheets）：**Planning/Produce 150万＋Creative/AD/Design 250万 ＝ 月400万円（税別）**（＝KDSマージン＋150万/月）
